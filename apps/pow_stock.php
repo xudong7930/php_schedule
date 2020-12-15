@@ -52,70 +52,63 @@ class PowStock {
 
     public function run()
     {
-        $content = $this->fetchRemoteContent();
 
-        // 个股资金流入榜单
-        $flowInStocks = $this->processQuery($content, 0);
-        $flowInStocks = array_map(function($item){
-            $item['type'] = self::IO_IN;
-            $item['dated_at'] = date('Y-m-d H:i');
-            return $item;
-        }, $flowInStocks);
-        $this->dbCli->insert('in_out_stocks', $flowInStocks);
+        $ql = QueryList::get($this->reqUrl);
+
+        // 流入排行榜
+        $inMoneys = $ql->range('.news-main > .news-box:eq(0) table .rank-tr')->rules([
+            'stock_code' => ['td:eq(1) > a', 'href'],
+            'stock_name' => ['td:eq(1) > a', 'text'],
+            'flow_amount' => ['td:eq(2)', 'text']
+        ])->queryData();
+
+        // 流出排行榜
+        $outMoneys = $ql->range('.news-main > .news-box:eq(1) table .rank-tr')->rules([
+            'stock_code' => ['td:eq(1) > a', 'href'],
+            'stock_name' => ['td:eq(1) > a', 'text'],
+            'flow_amount' => ['td:eq(2)', 'text']
+        ])->queryData();
+        $moneys = array_merge($inMoneys, $outMoneys);
+        $moneys = array_map(function($row){
+            $amount = trim($row['flow_amount'], '亿');
+
+            $row['amount'] = $amount;
+            unset($row['flow_amount']);
+
+            $type = $amount < 0 ? self::IO_OUT : self::IO_IN;
+            $row['type'] = $type;
+
+            $row['stock_code'] = $this->processStockCode($row['stock_code']);
+            $row['dated_at'] = date('Y-m-d H:i');
+            return $row;
+        }, $moneys);
+        $this->dbCli->insert('in_out_stocks', $moneys);
         
-        // 个股资金流出榜单
-        $flowOutStocks = $this->processQuery($content, 1);
-        $flowOutStocks = array_map(function($item){
-            $item['type'] = self::IO_OUT;
-            $item['dated_at'] = date('Y-m-d H:i');
-            return $item;
-        }, $flowOutStocks);
-        $this->dbCli->insert('in_out_stocks', $flowOutStocks);
 
-        // 雪球24小时关注股 
-        $hotStocks = $this->processQuery($content, 9);
-        $hotStocks = array_map(function($item){
-            unset($item['amount']);
-            $item['platform'] = 'xq';
-            // $item['dated_at'] = date('Y-m-d H:i');
-            return $item;
+        // 雪球热度
+        $hotStocks = $ql->range('.news-main > .news-box:eq(9) table .rank-tr')->rules([
+            'stock_code' => ['td:eq(1) > a', 'href'],
+            'stock_name' => ['td:eq(1) > a', 'text']
+        ])->queryData();
+        $hotStocks = array_map(function($row){
+            $row['platform'] = 'xq';
+            $row['stock_code'] = $this->processStockCode($row['stock_code']);
+            return $row;
         }, $hotStocks);
         $this->dbCli->insert('hot_stocks', $hotStocks);   
+
         echo 'finished'.PHP_EOL;     
     }
 
-    // 取得远程内容
-    private function fetchRemoteContent()
+    /**
+     * 处理地址：https://xueqiu.com/S/SZ000651，取得股票代码
+     * @return string
+     */
+    private function processStockCode($url)
     {
-        $ql = new QueryList;
-        $result = $ql->get($this->reqUrl);
-        return $result->find('.news-main');
+        list($xqUrl, $code) = explode("/S/", $url);
+        return preg_replace('/[SH|SZ]/', '', $code);
     }
-
-    // 处理html内容
-    public function processQuery($content, $i)
-    {
-        $data = [];
-        $content->find(".news-box:eq({$i}) tr")->map(function($tr)use(&$data){
-            $el_a = $tr->find("td>a");
-            $stock_name = $el_a->text();
-            $el_a_href = $el_a->attr('href');
-
-            list($link, $stock_code) = explode("/S/", $el_a->attr('href'));
-            $stock_code = substr($stock_code, 2);
-            $amount = $tr->find('td:eq(2)')->text();
-            $amount = trim($amount, '亿');
-
-            $data[] = array(
-                'stock_name' => $stock_name,
-                'stock_code' => $stock_code,
-                'amount' => $amount
-            );
-        });
-
-        return $data;
-    }
-
 }
 
 
