@@ -6,78 +6,78 @@ require 'library/sendDingMessage.php';
 use QL\QueryList;
 use Predis\Client;
 
-$keywords = ['红包','现金', '元', '微信', '招行', "有水", "大水", "小程序", "话费"];
-$targetUrls = [
-    'https://just998.com/xianbao?s=zhaohang',
-    // 'https://just998.com/xianbao?s=huafei',
-    // 'https://just998.com/xianbao?s=baoshui',
-    // 'https://just998.com/xianbao?s=vxhb',
-    // 'https://just998.com/xianbao?s=miling'
-];
 
-$redis = new Client([
-    'host' => '127.0.0.1',
-    'port' => 6379,
-    'password' => 'xudong7930'
-]);
+(new PowMmym)->run();
 
-$data = array();
+class PowMmym
+{
+    public $baseUrl = 'https://just998.com';
+    public $qlCli;
+    public $redisCli;
+    public $keywords = ['红包','现金', '元', '微信', '招行', "有水", "大水", "小程序", "话费"];
 
-$ql = new QueryList;
-foreach($targetUrls as $targetUrl) {
-    $siteObject = $ql->get($targetUrl);
-    $siteObject->find('.xianbao-item .xianbao-title')
-    	->map(function($el) use(&$data, $targetUrl, $keywords) {
-            $link = $el->find('a');
-            $link_href = $link->attr('href');
-            $link_title = $link->attr('title');
+    public function __construct()
+    {
+        $this->redisCli = new Client([
+            'host' => '127.0.0.1',
+            'port' => 6380,
+            'password' => '123456'
+        ]);      
+        $this->qlCli = new QueryList;
+    }
 
-            $a = preg_split('/\.html/', $link_href);
+    public function run()
+    {
+        $reqUrl = $this->baseUrl . '/xianbao?s=zhaohang';
+        $ql = $this->get_remote($reqUrl);
+        $result = $ql->range('.xianbao-item .xianbao-title')->rules([
+            'title' => ['a', 'attr(title)'],
+            'date_at' => ['a .mr-5', 'text'],
+            'href' => ['a', 'href']
+        ])->queryData();
+        
+        $xianbaos = [];
+        foreach($result as $item) {
+            // 判断是否过期
+            preg_match("/(分钟前|小时前|刚刚)/", $item['date_at'], $matched);
+            if (empty($matched)) {
+                continue;
+            }
+
+
+            // redis中判断是否存在
+            $a = preg_split('/\.html/', $item['href']);
             list($flag, $id) = explode("/", trim($a[0], '/'));
             $key = 'mmm_' . $id;
-
-            // 非今天日期的羊毛则跳过
-            $allowedKeyWords = ['小时前', '分钟', '刚刚'];
-            $publish_date = $el->find('p.mt-5 small.mr-5')->text();
-            $isAllowed = false;
-            foreach($allowedKeyWords as $allowdKeyWord) {
-                if (strpos($publish_date, $allowdKeyWord) !== false) {
-                    $isAllowed = true;
-                    break;
-                }
-            }
-            if (!$isAllowed) {
-                return ;
+            if($this->redisCli->exists($key)) {
+                continue;
             }
 
-            // 判断是否有关键词
-            $hasKeyword = false;
-            foreach($keywords as $kw) {
-                if (strpos($link_title, $kw) !== false) {
-                    $hasKeyword = true;
-                    break;
-                }
-            }
-            if (!$hasKeyword) {
-                return ;
-            }
+            // 组合数据
+            $reqUrl = $this->baseUrl . $item['href'];
+            $ql2 = $this->get_remote($reqUrl);
+            $content = $ql2->find('.panel-body .content')->html();
+            $content = str_replace('\t', '', $content);
 
-            $data[$key] = [
-                'url' => "https://just998.com".$link_href,
-                'title' => $link_title,
+            $xianbaos[$key] = [
+                'title' => $item['title'],
+                'content' => $content,
+                'url' => $reqUrl
             ];
-    });
-}
 
-$newYangmaos = [];
-foreach($data as $key=>$yangmao) {
-    $isExist = $redis->exists($key);
-    if (!$isExist) {
-        $newYangmaos[] = $yangmao;
-        $redis->set($key, json_encode($yangmao), 'EX', 86400);
+            // 添加到redis
+            $this->redisCli->set($key, json_encode($xianbaos[$key], JSON_UNESCAPED_UNICODE), 'EX', 86400);
+        }
+
+        if ($xianbaos) {
+            (new SendDingMessage)->send_message($xianbaos);
+        }
+
+        echo 'finished'.PHP_EOL;
     }
-}
 
-if ($newYangmaos) {
-    (new SendDingMessage)->send_message($newYangmaos);
+    protected function get_remote($url)
+    {
+        return $this->qlCli->get($url);
+    }
 }
