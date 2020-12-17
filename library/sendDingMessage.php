@@ -64,7 +64,8 @@ class SendDingMessage {
 						'oa' => [
 							'head' => ['bgcolor'=>'#ccc','title'=>'羊毛来了!'],
 							'body' => [
-								'title' => $message['title']
+								'title' => $message['title'],
+								'content' => isset($message['content']) ? $message['content'] : ''
 							],
 							"message_url" => $message['url'],
 							"pc_message_url" => $message['url']
