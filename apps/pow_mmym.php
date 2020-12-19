@@ -20,8 +20,8 @@ class PowMmym
     {
         $this->redisCli = new Client([
             'host' => '127.0.0.1',
-            'port' => 6380,
-            'password' => '123456'
+            'port' => 6379,
+            'password' => 'xudong7930'
         ]);      
         $this->qlCli = new QueryList;
     }
@@ -56,9 +56,12 @@ class PowMmym
             // 组合数据
             $reqUrl = $this->baseUrl . $item['href'];
             $ql2 = $this->get_remote($reqUrl);
-            $content = $ql2->find('.panel-body .content')->html();
-            $content = str_replace('\t', '', $content);
-
+            $content = $ql2->find('.panel-body .content')->text();
+            $content = str_replace('\t', '', trim($content));
+            if (empty($content)) {
+                continue;
+            }
+            
             $xianbaos[$key] = [
                 'title' => $item['title'],
                 'content' => $content,
