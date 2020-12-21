@@ -93,6 +93,7 @@ class PowStock {
         $hotStocks = array_map(function($row){
             $row['platform'] = 'xq';
             $row['stock_code'] = $this->processStockCode($row['stock_code']);
+            $row['dated_at'] = date('Y-m-d H:i');
             return $row;
         }, $hotStocks);
         $this->dbCli->insert('hot_stocks', $hotStocks);   
