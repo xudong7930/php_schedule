@@ -6,6 +6,7 @@
         "catfan/medoo": "^1.7",
         "monolog/monolog": "^2.1",
         "jaeger/querylist": "^4.2",
-        "salsify/json-streaming-parser": "^8.2"
+        "salsify/json-streaming-parser": "^8.2",
+        "swiftmailer/swiftmailer": "^6.0"
     }
 }
