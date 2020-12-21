@@ -50,7 +50,8 @@ class PowTaoguba
             $this->mailCli->run([
                 'subject' => $title,
                 'to' => 'xudong7930@dingtalk.com',
-                'content' => $content
+                'content' => $content,
+                'content_type' => 'text/html'
             ]);
         }
         echo 'finished!' . PHP_EOL;
@@ -59,7 +60,7 @@ class PowTaoguba
     public function fetchBlogContent($reqUrl)
     {
         $result = $this->qlCli->get($reqUrl);
-        $content = $result->find('.p_coten')->text();
+        $content = $result->find('.p_coten')->html();
         return $content;
     }
 
@@ -67,21 +68,15 @@ class PowTaoguba
     public function fetchBlogUrl()
     {
         $reqUrl = "https://www.taoguba.com.cn";
-        $result = $this->qlCli->get($reqUrl . '/blog/2335222');
 
-        $el = $result->find('.allblog_article .article_title:eq(0)');
+        $el = $this->qlCli->get($reqUrl . '/blog/2335222')->find('.all_right .allblog_article .article_tittle:eq(0)');
+        
+        $href = $el->find('a')->attr('href');
+        $title=  $el->find('a')->text();
 
-        $yuanchuang = $el->find('.tittle_yuanchuang')->text();
-        if (!$yuanchuang) {
-            return [false,false];
-        }
-
-        $blogUrl = $el->find('a')->attr('href');
-        $blogUrl = $reqUrl . $blogUrl;
-        $title = $el->find('a')->text();
+        $blogUrl = $reqUrl . '/' . $href;
         return [$title, $blogUrl];
     }
-
 
     protected function get_db_file()
     {
