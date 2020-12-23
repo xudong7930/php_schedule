@@ -17,7 +17,7 @@ class PowWanghou
     public $keywords = ['红包','现金', '元', '微信', '招行', "有水", "大水", "小程序", "话费"];
     public $ignored = [
         '京东','苏宁', '包邮','滴滴', '京豆', '小米','神器', 'QQ', 'Q币', 'QB',
-        '电影推荐','知乎','爱奇艺'
+        '电影推荐','知乎','爱奇艺', '保税'
     ];
 
     public function __construct()
@@ -67,6 +67,9 @@ class PowWanghou
             if (empty($content)) {
                 continue;
             }
+
+            $content = str_replace("(adsbygoogle = window.adsbygoogle || []).push({});", '', $content);
+            $content = preg_replace("/[[:blank:]|\n]+/", " ", $content);
             
             $xianbaos[$key] = [
                 'title' => $item['title'],
