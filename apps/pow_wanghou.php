@@ -15,7 +15,10 @@ class PowWanghou
     public $qlCli;
     public $redisCli;
     public $keywords = ['红包','现金', '元', '微信', '招行', "有水", "大水", "小程序", "话费"];
-    public $ignored = ['京东','苏宁', '包邮','滴滴', '京豆', '小米','神器'];
+    public $ignored = [
+        '京东','苏宁', '包邮','滴滴', '京豆', '小米','神器', 'QQ', 'Q币', 'QB',
+        '电影推荐','知乎','爱奇艺'
+    ];
 
     public function __construct()
     {
