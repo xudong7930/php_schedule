@@ -12,6 +12,7 @@ use Predis\Client;
 class PowMmym
 {
     public $baseUrl = 'https://just998.com';
+    public $contentUrl = 'http://ehd4.f3322.net/php_schedule/views/index.php?id=';
     public $qlCli;
     public $redisCli;
     public $keywords = ['红包','现金', '元', '微信', '招行', "有水", "大水", "小程序", "话费"];
@@ -62,10 +63,16 @@ class PowMmym
                 continue;
             }
             
+
+            $content_html = $ql2->find('.panel-body .content')->html();
+            $content_html = preg_replace("/href=\"/", "href=\"{$this->baseUrl}", $content_html);
+
             $xianbaos[$key] = [
                 'title' => $item['title'],
                 'content' => $content,
-                'url' => $reqUrl
+                'content_html' => $content_html,
+                'url' => $reqUrl,
+                'url_vultr' => $this->contentUrl . $key
             ];
 
             // 添加到redis

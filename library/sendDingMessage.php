@@ -67,8 +67,8 @@ class SendDingMessage {
 								'title' => $message['title'],
 								'content' => isset($message['content']) ? $message['content'] : ''
 							],
-							"message_url" => $message['url'],
-							"pc_message_url" => $message['url']
+							"message_url" => $message['url_vultr'],
+							"pc_message_url" => $message['url_vultr']
 						]
 					]
 				]
