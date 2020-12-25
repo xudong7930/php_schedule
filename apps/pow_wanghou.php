@@ -21,7 +21,7 @@ class PowWanghou
     public $ignored = [
         '京东','苏宁', '包邮','滴滴', '京豆', '小米','神器', 'QQ', 'Q币', 'QB',
         '电影推荐','知乎','爱奇艺', '保税','饿了么','翼支付', '支付宝积分', '螺蛳粉',
-        '滴滴'
+        '滴滴','金葵花'
     ];
 
     public function __construct()
@@ -76,7 +76,9 @@ class PowWanghou
             $content = preg_replace("/[[:blank:]|\n]+/", " ", $content);
 
             $content_html = $ql2->find('.thread-body .thread-content')->html();
-            
+            $content_html = preg_replace("/<script[\s\S]*?<\/script>/i", '', $content_html);
+            $content_html = preg_replace("/<ins[\s\S]*?<\/ins>/i", '', $content_html);
+
             $xianbaos[$key] = [
                 'title' => $item['title'],
                 'content' => $content,
