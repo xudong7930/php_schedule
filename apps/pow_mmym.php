@@ -65,6 +65,8 @@ class PowMmym
             
 
             $content_html = $ql2->find('.panel-body .content')->html();
+            $content_html = preg_replace("/<script[\s\S]*?<\/script>/i", '', $content_html);
+
             $content_html = preg_replace("/href=\"/", "href=\"{$this->baseUrl}", $content_html);
 
             $xianbaos[$key] = [
