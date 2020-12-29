@@ -51,7 +51,7 @@ class PowWanghou
         foreach($result as $item) {
 
             // 是否忽略
-            preg_match("/(".implode("|", $this->ignored).")/", $item['title'], $matched);
+            preg_match("/[".implode("|", $this->ignored)."]+/u", $item['title'], $matched);
             if( count($matched) ) {
                 continue;
             }
