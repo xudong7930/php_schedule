@@ -14,14 +14,14 @@ class PowWanghou
     public $baseUrl = 'https://iehou.com';
     public $qlCli;
     public $redisCli;
-    public $keywords = ['红包','现金', '元', '微信', '招行', "有水", "大水", "小程序", "话费"];
     public $content_url = 'http://ehd4.f3322.net/php_schedule/views/index.php?id=';
 
     // 忽略关键词
     public $ignored = [
         '京东','苏宁', '包邮','滴滴', '京豆', '小米','神器', 'QQ', 'Q币', 'QB',
         '电影推荐','知乎','爱奇艺', '保税','饿了么','翼支付', '支付宝积分', '螺蛳粉',
-        '滴滴','金葵花','封面红包', '淘宝', '值得买', '电影','旗舰店', '联通', '沃钱包', '购物券', '电信'
+        '滴滴','金葵花','封面', '淘宝', '值得买', '电影','旗舰店', '联通', '沃钱包', 
+        '购物券', '天翼', '光大', '美团', '饿了么'
     ];
 
     public function __construct()
@@ -51,7 +51,7 @@ class PowWanghou
         foreach($result as $item) {
 
             // 是否忽略
-            preg_match("/[".implode("|", $this->ignored)."]+/u", $item['title'], $matched);
+            preg_match("/[".implode("|", $this->ignored)."]{2,}/u", $item['title'], $matched);
             if( count($matched) ) {
                 continue;
             }
