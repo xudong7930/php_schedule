@@ -21,7 +21,12 @@ class PowWanghou
         '京东','苏宁', '包邮','滴滴', '京豆', '小米','神器', 'QQ', 'Q币', 'QB',
         '电影推荐','知乎','爱奇艺', '保税','饿了么','翼支付', '支付宝积分', '螺蛳粉',
         '滴滴','金葵花','封面', '淘宝', '值得买', '电影','旗舰店', '联通', '沃钱包', 
-        '购物券', '天翼', '光大', '美团', '饿了么'
+        '购物券', '天翼', '光大', '美团', '饿了么', '微博'
+    ];
+
+    // 允许的关键词
+    public $keywords = [
+        '微信', '红包', 'VX', 'vx', '移动', '招行', '农行', '建行', '中行', '公众号', '小程序', '现金', '小毛', '大毛','话费'
     ];
 
     public function __construct()
@@ -53,6 +58,12 @@ class PowWanghou
             // 是否忽略
             preg_match("/[".implode("|", $this->ignored)."]{2,}/u", $item['title'], $matched);
             if( count($matched) ) {
+                continue;
+            }
+
+            // 是否包含
+            preg_match("/[".implode("|", $this->keywords)."]{2,}/u", $item['title'], $matched2);
+            if( !count($matched2) ) {
                 continue;
             }
 
